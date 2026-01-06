@@ -39,21 +39,14 @@ Este repositorio contiene un entorno de desarrollo contenerizado y optimizado pa
     ```bash
     uv lock
     ```
-
-3. **Permisos de ejecución (Crítico)**
-    Para que el contenedor pueda iniciar correctamente en Linux, los scripts de entrada deben tener permisos de ejecución en el host:
-
-    ```bash
-    chmod +x entrypoint.sh
-    ```
-4.  **Levanta el entorno:**
+3.  **Levanta el entorno:**
     Este comando construye la imagen e inicia el contenedor en segundo plano.
     ```bash
     podman-compose up -d --build
     ```
     > *Nota: Al iniciar, el contenedor configurará automáticamente los hooks de pre-commit en tu carpeta `.git` local.*
 
-5.  **Accede al contenedor:**
+4.  **Accede al contenedor:**
     Para ejecutar comandos, entra en la terminal del contenedor:
     ```bash
     podman exec -it python_dev_env /bin/bash
