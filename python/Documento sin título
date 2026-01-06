@@ -1,0 +1,84 @@
+Este es un `README.md` diseñado para ser profesional, abstracto y útil para cualquier proyecto que utilice esta arquitectura de contenedores. He incluido los puntos críticos que solucionamos (permisos de ejecución, uso de `uv` y especificidades de Linux/Podman).
+
+---
+
+# 🐍 Python Dev Environment (UV + Podman/Docker)
+
+Este repositorio proporciona una base sólida y moderna para entornos de desarrollo en Python, utilizando **uv** como gestor de dependencias de alto rendimiento y contenedores para garantizar la reproducibilidad.
+
+> [!IMPORTANT]
+> **Entorno de ejecución:** Este entorno está optimizado para sistemas **Linux**. Utiliza configuraciones específicas como `keep-id` y sufijos de volumen `:z` para compatibilidad con **Podman** y **SELinux**.
+
+## 🚀 Requisitos Previos
+
+*   **Sistema Operativo:** Linux (probado en Fedora, Ubuntu y Arch).
+*   **Motor de Contenedores:** [Podman](https://podman.io/) (recomendado) o Docker.
+*   **Orquestador:** `podman-compose` o `docker-compose`.
+*   **Gestor local (opcional):** [uv](https://docs.astral.sh/uv/) instalado localmente para generar archivos de bloqueo.
+
+## 🛠️ Estructura del Proyecto
+
+*   `Dockerfile`: Imagen base optimizada basada en Python Slim.
+*   `compose.yml`: Definición del servicio, volúmenes y políticas de usuario.
+*   `pyproject.toml`: Definición de dependencias (estándar PEP 621).
+*   `entrypoint.sh`: Script de inicialización del contenedor.
+
+## 🏗️ Guía de Construcción y Puesta en Marcha
+
+Sigue estos pasos para inicializar el entorno desde cero:
+
+### 1. Preparación de dependencias
+Antes de construir la imagen, es necesario generar el archivo de bloqueo para asegurar versiones consistentes:
+
+```bash
+uv lock
+```
+
+### 2. Permisos de ejecución (Crítico)
+Para que el contenedor pueda iniciar correctamente en Linux, los scripts de entrada deben tener permisos de ejecución en el host:
+
+```bash
+chmod +x entrypoint.sh
+```
+
+### 3. Construcción del entorno
+Utiliza el orquestador para descargar las imágenes base y construir tu capa personalizada:
+
+```bash
+podman-compose build
+```
+
+### 4. Lanzamiento
+Inicia el contenedor en segundo plano:
+
+```bash
+podman-compose up -d
+```
+
+## 💡 Uso del Entorno
+
+Una vez el contenedor esté corriendo, puedes acceder a él para ejecutar comandos, tests o scripts:
+
+```bash
+# Acceder a una terminal interactiva dentro del contenedor
+podman exec -it python_dev_env /bin/bash
+
+# Ejecutar un comando directamente usando el venv gestionado por uv
+podman exec python_dev_env python src/main.py
+```
+
+## 🔧 Detalles Técnicos de Linux/Podman
+
+*   **Persistencia del Virtualenv:** Se utiliza un volumen dedicado (`venv_data`) mapeado a `/app/.venv` para evitar que las dependencias se pierdan al destruir el contenedor o se mezclen con archivos del host.
+*   **Gestión de Permisos (`keep-id`):** En el archivo `compose.yml`, se utiliza `userns_mode: keep-id`. Esto permite que el usuario dentro del contenedor tenga el mismo UID/GID que tu usuario en Linux, evitando errores de "Permiso denegado" al escribir archivos desde el contenedor hacia tu carpeta local.
+*   **SELinux:** Los volúmenes están marcados con `:z` para permitir que Podman reetiquete automáticamente los contextos de seguridad de los archivos en sistemas con SELinux habilitado.
+
+## 📝 Notas sobre `uv`
+Este proyecto utiliza `uv` para la sincronización de paquetes. Si añades una nueva librería al `pyproject.toml`, puedes actualizar el entorno vivo sin reconstruir la imagen:
+
+```bash
+podman exec python_dev_env uv sync
+```
+
+---
+*Mantenido por Victor - 2026*
